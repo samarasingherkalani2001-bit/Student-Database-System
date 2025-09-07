@@ -13,7 +13,7 @@ public class StudentDAO {
 
             try (Statement s = conn.createStatement();
                  ResultSet r = s.executeQuery("SELECT DATABASE()")) {
-                if (r.next()) System.out.println("Using DB: " + r.getString(1)); // should be studentdb2
+                if (r.next()) System.out.println("Using DB: " + r.getString(1));
             }
 
             System.out.print("Name: ");
@@ -28,7 +28,7 @@ public class StudentDAO {
             System.out.print("GPA (0.00 - 4.00): ");
             BigDecimal gpa = new BigDecimal(in.nextLine().trim());
             if (gpa.compareTo(new BigDecimal("0.00")) < 0 || gpa.compareTo(new BigDecimal("4.00")) > 0) {
-                System.out.println("❗ GPA must be between 0.00 and 4.00");
+                System.out.println(" GPA must be between 0.00 and 4.00");
                 return;
             }
 
