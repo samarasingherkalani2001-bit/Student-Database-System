@@ -6,11 +6,11 @@ public class StudentDAO {
 
     private static final Scanner in = new Scanner(System.in);
 
-    // ---------- CREATE ----------
+
     public static void insertStudent() {
         try (Connection conn = DatabaseConnection.getConnection()) {
 
-            // (optional) prove we're on the right DB
+
             try (Statement s = conn.createStatement();
                  ResultSet r = s.executeQuery("SELECT DATABASE()")) {
                 if (r.next()) System.out.println("Using DB: " + r.getString(1)); // should be studentdb2
@@ -42,21 +42,21 @@ public class StudentDAO {
 
                 if (rows == 1) {
                     try (ResultSet keys = ps.getGeneratedKeys()) {
-                        if (keys.next()) System.out.println("✅ Added. New ID = " + keys.getInt(1));
-                        else System.out.println("✅ Added.");
+                        if (keys.next()) System.out.println(" Added. New ID = " + keys.getInt(1));
+                        else System.out.println("Added.");
                     }
                 }
             } catch (SQLIntegrityConstraintViolationException dup) {
-                System.out.println("❗ Email already exists. Use another email.");
+                System.out.println(" Email already exists. Use another email.");
             }
 
         } catch (Exception e) {
-            System.out.println("❗ Insert failed: " + e.getMessage());
+            System.out.println(" Insert failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    // ---------- READ ----------
+
     public static void listStudents() {
         String sql = "SELECT id, name, email, course, gpa FROM student ORDER BY id";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -75,12 +75,12 @@ public class StudentDAO {
             }
             if (!any) System.out.println("(no records)");
         } catch (SQLException e) {
-            System.out.println("❗ Read failed: " + e.getMessage());
+            System.out.println(" Read failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    // ---------- UPDATE ----------
+
     public static void updateStudent() {
         try (Connection conn = DatabaseConnection.getConnection()) {
             System.out.print("Enter ID to update: ");
@@ -96,7 +96,7 @@ public class StudentDAO {
                 case "course" -> sql = "UPDATE student SET course=? WHERE id=?";
                 case "gpa"    -> sql = "UPDATE student SET gpa=? WHERE id=?";
                 default -> {
-                    System.out.println("❗ Unknown field.");
+                    System.out.println(" Unknown field.");
                     return;
                 }
             }
@@ -106,7 +106,7 @@ public class StudentDAO {
                     System.out.print("New GPA (0.00 - 4.00): ");
                     BigDecimal gpa = new BigDecimal(in.nextLine().trim());
                     if (gpa.compareTo(new BigDecimal("0.00")) < 0 || gpa.compareTo(new BigDecimal("4.00")) > 0) {
-                        System.out.println("❗ GPA must be between 0.00 and 4.00");
+                        System.out.println(" GPA must be between 0.00 and 4.00");
                         return;
                     }
                     ps.setBigDecimal(1, gpa);
@@ -117,18 +117,18 @@ public class StudentDAO {
                 ps.setInt(2, id);
 
                 int rows = ps.executeUpdate();
-                System.out.println(rows == 1 ? "✅ Updated." : "❗ ID not found / no change.");
+                System.out.println(rows == 1 ? " Updated." : " ID not found / no change.");
             } catch (SQLIntegrityConstraintViolationException dup) {
-                System.out.println("❗ Email already exists. Use another email.");
+                System.out.println(" Email already exists. Use another email.");
             }
 
         } catch (Exception e) {
-            System.out.println("❗ Update failed: " + e.getMessage());
+            System.out.println("Update failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    // ---------- DELETE ----------
+
     public static void deleteStudent() {
         String sql = "DELETE FROM student WHERE id=?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -139,10 +139,10 @@ public class StudentDAO {
 
             ps.setInt(1, id);
             int rows = ps.executeUpdate();
-            System.out.println(rows == 1 ? "✅ Deleted." : "❗ ID not found.");
+            System.out.println(rows == 1 ? " Deleted." : " ID not found.");
 
         } catch (Exception e) {
-            System.out.println("❗ Delete failed: " + e.getMessage());
+            System.out.println(" Delete failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
