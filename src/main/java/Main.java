@@ -29,7 +29,7 @@ public class Main {
                 System.out.println(" Database error: " + ex.getMessage());
             } catch (InputMismatchException ex) {
                 System.out.println(" Invalid input type. Try again.");
-                in.nextLine(); // clear scanner buffer
+                in.nextLine();
             }
         }
     }
