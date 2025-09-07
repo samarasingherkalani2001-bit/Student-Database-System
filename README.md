@@ -118,11 +118,7 @@ Choose:
 
 This project is licensed under the MIT License.
 
-```
 
----
 
-This style is **badge-based, clean sections, and professional** (like many GitHub open-source projects).  
 
-👉 Do you also want me to create a **shorter “one-page” style** README (minimal text, just badges + quick setup)? That’s good if your lecturer only wants a summary.
-```
+
