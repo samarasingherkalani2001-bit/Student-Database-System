@@ -24,7 +24,7 @@ public final class DatabaseConnection {
 
     public static Connection getConnection() throws SQLException {
         try {
-            // Explicitly load MySQL driver (good for older JVMs / servers)
+
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException e) {
             throw new SQLException("MySQL Driver not found! Ensure mysql-connector-j is in your classpath.", e);
