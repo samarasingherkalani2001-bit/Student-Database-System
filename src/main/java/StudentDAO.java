@@ -1,91 +1,148 @@
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Scanner;
 
 public class StudentDAO {
 
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final Scanner in = new Scanner(System.in);
 
-
+    // ---------- CREATE ----------
     public static void insertStudent() {
-        System.out.print("Enter First Name: ");
-        String firstName = scanner.nextLine();
-        System.out.print("Enter Last Name: ");
-        String lastName = scanner.nextLine();
-        System.out.print("Enter Date of Birth (YYYY-MM-DD): ");
-        String dob = scanner.nextLine();
-        System.out.print("Enter Gender (Male/Female/Other): ");
-        String gender = scanner.nextLine();
-        System.out.print("Enter Email: ");
-        String email = scanner.nextLine();
-        System.out.print("Enter Phone Number: ");
-        String phoneNumber = scanner.nextLine();
+        try (Connection conn = DatabaseConnection.getConnection()) {
 
-        String query = "INSERT INTO Students (first_name, last_name, dob, gender, email, phone_number) VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, firstName);
-            stmt.setString(2, lastName);
-            stmt.setString(3, dob);
-            stmt.setString(4, gender);
-            stmt.setString(5, email);
-            stmt.setString(6, phoneNumber);
-
-            stmt.executeUpdate();
-            System.out.println("Student added successfully.");
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void getAllStudents() {
-        String query = "SELECT * FROM Students";
-
-        try (Connection conn = DatabaseConnection.connect();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                System.out.println("ID: " + rs.getInt("student_id") + ", Name: " + rs.getString("first_name") + " " + rs.getString("last_name"));
+            // (optional) prove we're on the right DB
+            try (Statement s = conn.createStatement();
+                 ResultSet r = s.executeQuery("SELECT DATABASE()")) {
+                if (r.next()) System.out.println("Using DB: " + r.getString(1)); // should be studentdb2
             }
-        } catch (SQLException e) {
+
+            System.out.print("Name: ");
+            String name = in.nextLine().trim();
+
+            System.out.print("Email: ");
+            String email = in.nextLine().trim();
+
+            System.out.print("Course: ");
+            String course = in.nextLine().trim();
+
+            System.out.print("GPA (0.00 - 4.00): ");
+            BigDecimal gpa = new BigDecimal(in.nextLine().trim());
+            if (gpa.compareTo(new BigDecimal("0.00")) < 0 || gpa.compareTo(new BigDecimal("4.00")) > 0) {
+                System.out.println("❗ GPA must be between 0.00 and 4.00");
+                return;
+            }
+
+            String sql = "INSERT INTO student (name, email, course, gpa) VALUES (?, ?, ?, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                ps.setString(1, name);
+                ps.setString(2, email);
+                ps.setString(3, course);
+                ps.setBigDecimal(4, gpa);
+                int rows = ps.executeUpdate();
+
+                if (rows == 1) {
+                    try (ResultSet keys = ps.getGeneratedKeys()) {
+                        if (keys.next()) System.out.println("✅ Added. New ID = " + keys.getInt(1));
+                        else System.out.println("✅ Added.");
+                    }
+                }
+            } catch (SQLIntegrityConstraintViolationException dup) {
+                System.out.println("❗ Email already exists. Use another email.");
+            }
+
+        } catch (Exception e) {
+            System.out.println("❗ Insert failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
+    // ---------- READ ----------
+    public static void listStudents() {
+        String sql = "SELECT id, name, email, course, gpa FROM student ORDER BY id";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
 
+            boolean any = false;
+            while (rs.next()) {
+                any = true;
+                System.out.printf("ID:%d | %s | %s | %s | GPA:%s%n",
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("email"),
+                        rs.getString("course"),
+                        rs.getBigDecimal("gpa"));
+            }
+            if (!any) System.out.println("(no records)");
+        } catch (SQLException e) {
+            System.out.println("❗ Read failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // ---------- UPDATE ----------
     public static void updateStudent() {
-        System.out.print("Enter Student ID to Update: ");
-        int studentId = scanner.nextInt();
-        scanner.nextLine();  // consume newline
-        System.out.print("Enter New Email: ");
-        String newEmail = scanner.nextLine();
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            System.out.print("Enter ID to update: ");
+            int id = Integer.parseInt(in.nextLine().trim());
 
-        String query = "UPDATE Students SET email = ? WHERE student_id = ?";
+            System.out.print("Field to update (name/email/course/gpa): ");
+            String field = in.nextLine().trim().toLowerCase();
 
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, newEmail);
-            stmt.setInt(2, studentId);
+            String sql;
+            switch (field) {
+                case "name"   -> sql = "UPDATE student SET name=? WHERE id=?";
+                case "email"  -> sql = "UPDATE student SET email=? WHERE id=?";
+                case "course" -> sql = "UPDATE student SET course=? WHERE id=?";
+                case "gpa"    -> sql = "UPDATE student SET gpa=? WHERE id=?";
+                default -> {
+                    System.out.println("❗ Unknown field.");
+                    return;
+                }
+            }
 
-            stmt.executeUpdate();
-            System.out.println("Student updated successfully.");
-        } catch (SQLException e) {
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if ("gpa".equals(field)) {
+                    System.out.print("New GPA (0.00 - 4.00): ");
+                    BigDecimal gpa = new BigDecimal(in.nextLine().trim());
+                    if (gpa.compareTo(new BigDecimal("0.00")) < 0 || gpa.compareTo(new BigDecimal("4.00")) > 0) {
+                        System.out.println("❗ GPA must be between 0.00 and 4.00");
+                        return;
+                    }
+                    ps.setBigDecimal(1, gpa);
+                } else {
+                    System.out.print("New value: ");
+                    ps.setString(1, in.nextLine().trim());
+                }
+                ps.setInt(2, id);
+
+                int rows = ps.executeUpdate();
+                System.out.println(rows == 1 ? "✅ Updated." : "❗ ID not found / no change.");
+            } catch (SQLIntegrityConstraintViolationException dup) {
+                System.out.println("❗ Email already exists. Use another email.");
+            }
+
+        } catch (Exception e) {
+            System.out.println("❗ Update failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
+
+    // ---------- DELETE ----------
     public static void deleteStudent() {
-        System.out.print("Enter Student ID to Delete: ");
-        int studentId = scanner.nextInt();
+        String sql = "DELETE FROM student WHERE id=?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-        String query = "DELETE FROM Students WHERE student_id = ?";
+            System.out.print("Enter ID to delete: ");
+            int id = Integer.parseInt(in.nextLine().trim());
 
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, studentId);
+            ps.setInt(1, id);
+            int rows = ps.executeUpdate();
+            System.out.println(rows == 1 ? "✅ Deleted." : "❗ ID not found.");
 
-            stmt.executeUpdate();
-            System.out.println("Student deleted successfully.");
-        } catch (SQLException e) {
+        } catch (Exception e) {
+            System.out.println("❗ Delete failed: " + e.getMessage());
             e.printStackTrace();
         }
     }
