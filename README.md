@@ -58,16 +58,7 @@ CREATE TABLE student (
 );
 ```
 
-### 3. Configure Database Connection
-
-Update your `DatabaseConnection.java`:
-
-```java
-private static final String DB_NAME = "studentdb2";
-private static final String USER = "your-username";
-private static final String PASS = "your-password";
-```
-
+###
 ### 4. Run Project
 
 ```bash
@@ -76,7 +67,7 @@ mvn clean compile exec:java -Dexec.mainClass=Main
 
 Or in IntelliJ IDEA → Run `Main`.
 
----
+
 
 ## 📂 Project Structure
 
